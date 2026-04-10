@@ -55,8 +55,14 @@ const projectSchema = z.object({
   created_by: z.string().min(1, "Creator name is required").max(50),
   start_date: z.string().optional().or(z.literal('')),
   end_date: z.string().optional().or(z.literal('')),
-  budget: z.number().min(0, "Budget must be positive").optional().nullable(),
-  progress: z.number().min(0).max(100).optional().nullable(),
+  budget: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined) ? null : Number(val),
+    z.number().min(0, "Budget must be positive").nullable().optional()
+  ),
+  progress: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined) ? null : Number(val),
+    z.number().min(0).max(100).nullable().optional()
+  ),
 });
 
 const errors = ref({});
