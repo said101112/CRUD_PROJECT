@@ -85,12 +85,15 @@ const handleSubmit = () => {
   } catch (err) {
     if (err instanceof z.ZodError) {
       const formattedErrors = {};
-      err.errors.forEach(e => {
+      const zodIssues = err.issues || err.errors || [];
+      zodIssues.forEach(e => {
         if (e.path[0]) {
           formattedErrors[e.path[0]] = e.message;
         }
       });
       errors.value = formattedErrors;
+    } else {
+      console.error(err);
     }
   }
 };
