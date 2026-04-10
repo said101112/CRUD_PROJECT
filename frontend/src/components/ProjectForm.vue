@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Save, X } from 'lucide-vue-next';
+import { z } from 'zod';
+import DOMPurify from 'dompurify';
 
 const props = defineProps({
   initialData: {
@@ -44,8 +46,53 @@ onMounted(() => {
   }
 });
 
+const projectSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100, "Title is too long"),
+  description: z.string().min(1, "Description is required"),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  category: z.string().optional().nullable(),
+  technologies: z.string().optional().nullable(),
+  created_by: z.string().min(1, "Creator name is required").max(50),
+  start_date: z.string().optional().or(z.literal('')),
+  end_date: z.string().optional().or(z.literal('')),
+  budget: z.number().min(0, "Budget must be positive").optional().nullable(),
+  progress: z.number().min(0).max(100).optional().nullable(),
+});
+
+const errors = ref({});
+
 const handleSubmit = () => {
-  emit('submit', { ...form.value });
+  try {
+    // 1. Validate with Zod
+    projectSchema.parse(form.value);
+    errors.value = {};
+    
+    // 2. Sanitize text inputs against XSS
+    const sanitizedForm = {
+      ...form.value,
+      title: DOMPurify.sanitize(form.value.title),
+      description: DOMPurify.sanitize(form.value.description),
+      category: form.value.category ? DOMPurify.sanitize(form.value.category) : '',
+      technologies: form.value.technologies ? DOMPurify.sanitize(form.value.technologies) : '',
+      created_by: DOMPurify.sanitize(form.value.created_by),
+    };
+
+    // Replace empty strings with null for dates where DB expects true null
+    if (!sanitizedForm.start_date) sanitizedForm.start_date = null;
+    if (!sanitizedForm.end_date) sanitizedForm.end_date = null;
+
+    emit('submit', sanitizedForm);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      const formattedErrors = {};
+      err.errors.forEach(e => {
+        if (e.path[0]) {
+          formattedErrors[e.path[0]] = e.message;
+        }
+      });
+      errors.value = formattedErrors;
+    }
+  }
 };
 </script>
 
@@ -56,13 +103,15 @@ const handleSubmit = () => {
         <!-- Title -->
         <div class="form-group full-width">
           <label for="title">Project Title *</label>
-          <input type="text" id="title" v-model="form.title" required placeholder="e.g. Build Payment Gateway">
+          <input type="text" id="title" v-model="form.title" :class="{'error-input': errors.title}" placeholder="e.g. Build Payment Gateway">
+          <span class="error-text" v-if="errors.title">{{ errors.title }}</span>
         </div>
 
         <!-- Description -->
         <div class="form-group full-width">
           <label for="description">Description *</label>
-          <textarea id="description" v-model="form.description" rows="4" required placeholder="Project details..."></textarea>
+          <textarea id="description" v-model="form.description" rows="4" :class="{'error-input': errors.description}" placeholder="Project details..."></textarea>
+          <span class="error-text" v-if="errors.description">{{ errors.description }}</span>
         </div>
 
         <!-- Priority & Category -->
@@ -74,6 +123,7 @@ const handleSubmit = () => {
             <option value="HIGH">High</option>
             <option value="CRITICAL">Critical</option>
           </select>
+          <span class="error-text" v-if="errors.priority">{{ errors.priority }}</span>
         </div>
         
         <div class="form-group">
@@ -84,7 +134,8 @@ const handleSubmit = () => {
         <!-- Created By -->
         <div class="form-group full-width">
           <label for="created_by">Created By *</label>
-          <input type="text" id="created_by" v-model="form.created_by" required placeholder="Your name">
+          <input type="text" id="created_by" v-model="form.created_by" :class="{'error-input': errors.created_by}" placeholder="Your name">
+          <span class="error-text" v-if="errors.created_by">{{ errors.created_by }}</span>
         </div>
 
         <!-- Tech Stack -->
@@ -96,23 +147,27 @@ const handleSubmit = () => {
         <!-- Dates -->
         <div class="form-group">
           <label for="start_date">Start Date</label>
-          <input type="date" id="start_date" v-model="form.start_date">
+          <input type="date" id="start_date" v-model="form.start_date" :class="{'error-input': errors.start_date}">
+          <span class="error-text" v-if="errors.start_date">{{ errors.start_date }}</span>
         </div>
         
         <div class="form-group">
           <label for="end_date">End Date</label>
-          <input type="date" id="end_date" v-model="form.end_date">
+          <input type="date" id="end_date" v-model="form.end_date" :class="{'error-input': errors.end_date}">
+          <span class="error-text" v-if="errors.end_date">{{ errors.end_date }}</span>
         </div>
         
-        <!-- Budget & Progress (only on edit mode helps simplify, but let's allow progress if editing) -->
+        <!-- Budget & Progress -->
         <div class="form-group">
           <label for="budget">Budget (€)</label>
-          <input type="number" id="budget" v-model.number="form.budget" step="100" min="0">
+          <input type="number" id="budget" v-model.number="form.budget" step="100" min="0" :class="{'error-input': errors.budget}">
+          <span class="error-text" v-if="errors.budget">{{ errors.budget }}</span>
         </div>
 
         <div class="form-group" v-if="isEditing">
           <label for="progress">Progress (%)</label>
-          <input type="number" id="progress" v-model.number="form.progress" min="0" max="100">
+          <input type="number" id="progress" v-model.number="form.progress" min="0" max="100" :class="{'error-input': errors.progress}">
+          <span class="error-text" v-if="errors.progress">{{ errors.progress }}</span>
         </div>
       </div>
 
@@ -164,5 +219,15 @@ label {
   gap: 1rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-color);
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.error-input {
+  border-color: #ef4444 !important;
 }
 </style>
