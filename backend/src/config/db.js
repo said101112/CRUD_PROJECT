@@ -1,5 +1,9 @@
-const { Pool } = require('pg');
-require('dotenv').config();
+import pg from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const { Pool } = pg;
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -14,6 +18,6 @@ pool.on('error', (err, client) => {
   process.exit(-1);
 });
 
-module.exports = {
+export default {
   query: (text, params) => pool.query(text, params),
 };

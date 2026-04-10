@@ -1,4 +1,4 @@
-const db = require('../config/db');
+import db from '../config/db.js';
 
 class ProjectModel {
   static async findAll() {
@@ -57,4 +57,4 @@ class ProjectModel {
   }
 }
 
-module.exports = ProjectModel;
+export default ProjectModel;

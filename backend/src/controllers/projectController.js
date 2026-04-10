@@ -1,6 +1,6 @@
-const ProjectModel = require('../models/projectModel');
+import ProjectModel from '../models/projectModel.js';
 
-exports.getAllProjects = async (req, res) => {
+export const getAllProjects = async (req, res) => {
   try {
     const projects = await ProjectModel.findAll();
     res.json(projects);
@@ -10,7 +10,7 @@ exports.getAllProjects = async (req, res) => {
   }
 };
 
-exports.getProjectById = async (req, res) => {
+export const getProjectById = async (req, res) => {
   try {
     const project = await ProjectModel.findById(req.params.id);
     if (!project) {
@@ -23,7 +23,7 @@ exports.getProjectById = async (req, res) => {
   }
 };
 
-exports.createProject = async (req, res) => {
+export const createProject = async (req, res) => {
   try {
     const project = await ProjectModel.create(req.body);
     res.status(201).json(project);
@@ -33,7 +33,7 @@ exports.createProject = async (req, res) => {
   }
 };
 
-exports.updateProject = async (req, res) => {
+export const updateProject = async (req, res) => {
   try {
     const updatedProject = await ProjectModel.update(req.params.id, req.body);
     if (!updatedProject) {
@@ -46,7 +46,7 @@ exports.updateProject = async (req, res) => {
   }
 };
 
-exports.updateProjectStatus = async (req, res) => {
+export const updateProjectStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const updatedProject = await ProjectModel.updateStatus(req.params.id, status);
@@ -60,7 +60,7 @@ exports.updateProjectStatus = async (req, res) => {
   }
 };
 
-exports.deleteProject = async (req, res) => {
+export const deleteProject = async (req, res) => {
   try {
     const success = await ProjectModel.delete(req.params.id);
     if (!success) {
