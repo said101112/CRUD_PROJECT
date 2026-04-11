@@ -6,7 +6,8 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -19,6 +20,8 @@
     "pg": "^8.11.3"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "jest": "^30.3.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^7.2.2"
   }
 }
