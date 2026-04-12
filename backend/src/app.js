@@ -1,26 +1,51 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import projectRoutes from './routes/projectRoutes.js';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
+
+import projectRoutes from "./routes/projectRoutes.js";
 
 dotenv.config();
 
-const app = express();
+const app = express(); // ✅ IMPORTANT : AVANT TOUT
 
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/projects', projectRoutes);
+// Routes
+app.use("/api/projects", projectRoutes);
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Mini Project Management API' });
+// Swagger config
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "ENSAT Project API",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+      },
+    ],
+  },
+  apis: ["./src/routes/*.js"], // ⚠️ IMPORTANT
+};
+
+const specs = swaggerJsdoc(options);
+
+// Swagger route
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+
+// Test route
+app.get("/", (req, res) => {
+  res.json({ message: "API is working 🚀" });
 });
 
-// Port configuration
+// Port
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-export default app;
