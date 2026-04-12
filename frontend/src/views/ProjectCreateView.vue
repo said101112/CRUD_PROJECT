@@ -7,10 +7,14 @@ const router = useRouter();
 
 const handleSubmit = async (projectData) => {
   try {
-    await api.createProject(projectData);
-    router.push('/');
+    const created = await api.createProject(projectData);
+    if (created && created.id) {
+      router.push('/');
+    } else {
+      throw new Error('Invalid response from server');
+    }
   } catch (err) {
-    console.error(err);
+    console.error('Error creating project:', err);
     alert('Failed to create project');
   }
 };

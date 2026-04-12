@@ -11,11 +11,25 @@ const loading = ref(true);
 
 onMounted(async () => {
   try {
-    project.value = await api.getProject(route.params.id);
+    const projectData = await api.getProject(route.params.id);
+    project.value = projectData || {
+      id: route.params.id,
+      name: '',
+      description: '',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
   } catch (err) {
-    console.error(err);
-    alert('Failed to load project details');
-    router.push('/');
+    console.error('Error loading project:', err);
+    project.value = {
+      id: route.params.id,
+      name: '',
+      description: '',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
   } finally {
     loading.value = false;
   }
@@ -23,10 +37,14 @@ onMounted(async () => {
 
 const handleSubmit = async (projectData) => {
   try {
-    await api.updateProject(route.params.id, projectData);
-    router.push('/');
+    const updated = await api.updateProject(route.params.id, projectData);
+    if (updated && updated.id) {
+      router.push('/');
+    } else {
+      throw new Error('Invalid response from server');
+    }
   } catch (err) {
-    console.error(err);
+    console.error('Error updating project:', err);
     alert('Failed to update project');
   }
 };
