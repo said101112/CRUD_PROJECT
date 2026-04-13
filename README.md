@@ -4,7 +4,7 @@ A full-stack application for managing projects with CRUD operations, status trac
 
 ## Tech Stack
 - **Frontend**: Vue.js 3, Vite, Vitest, Cypress
-- **Backend**: Express.js, PostgreSQL, Jest, postman
+- **Backend**: Express.js, PostgreSQL, Jest, postman , swagger
 - **Database**: PostgreSQL
 - **Security**: Parameterized queries, input validation, helmet, cors
 
